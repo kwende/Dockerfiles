@@ -1,0 +1,25 @@
+# https://github.com/sczhou/CodeFormer
+# video/image repair & upscaling
+
+FROM ubuntu:20.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get install python3 python3-pip wget git ffmpeg libsm6 libxext6 -y
+RUN python3 -m pip install jupyter scipy==1.8
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+RUN /bin/bash ~/miniconda.sh -b -p $HOME/miniconda
+RUN git clone https://github.com/sczhou/CodeFormer
+RUN cd CodeFormer
+
+RUN /root/miniconda/bin/conda create -n codeformer python=3.8 -y
+RUN /root/miniconda/bin/conda activate codeformer
+
+RUN python3-pip install -r requirements.txt
+
+RUN python3 -m pip uninstall scipy
+RUN python3 -m pip install scipy==1.8
+RUN python3 basicsr/setup.py develop
+
+RUN /root/miniconda/bin/conda install -c conda-forge dlib -y
