@@ -1,0 +1,45 @@
+docker run -it --gpus all -v /home/brush/Documents/diffusion/:/data nvidia/cuda:12.1.1-base-ubuntu20.04
+docker run -it --gpus all -v /home/brush/Documents/diffusion/:/data nvidia/cuda:11.4.3-devel-ubuntu20.04 
+docker run -it --gpus all -v /home/brush/Documents/diffusion/:/data nvidia/cuda:11.7.1-devel-ubuntu20.04
+
+apt-get update
+apt-get install wget python3 python3-pip git curl ffmpeg libsm6 libxext6 -y
+wget https://repo.anaconda.com/miniconda/Miniconda3-py38_23.5.2-0-Linux-x86_64.sh
+chmod +x Miniconda3-py38_23.5.2-0-Linux-x86_64.sh
+./Miniconda3-py38_23.5.2-0-Linux-x86_64.sh -b -p $HOME/anaconda3
+git clone https://github.com/Stability-AI/stablediffusion.git
+
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+apt-get install git-lfs
+
+for https://huggingface.co/stabilityai/stable-diffusion-2-1/tree/main
+ git clone https://huggingface.co/stabilityai/stable-diffusion-2-1 /data/stable-diffusion-2-1
+
+for https://huggingface.co/stabilityai/stable-diffusion-2-1-base/tree/main?clone=true
+ git clone https://huggingface.co/stabilityai/stable-diffusion-2-1-base /data/stable-diffusion-2-1-base
+
+cd /stablediffusion && python3 -m pip install -r requirements.txt
+
+export CUDA_HOME=/usr/local/cuda-11.7
+/root/anaconda3/bin/conda install -c nvidia/label/cuda-11.7.1 cuda-nvcc
+/root/anaconda3/bin/conda install -c conda-forge gcc
+/root/anaconda3/bin/conda install -c conda-forge gxx_linux-64==9.5.0
+
+cd ..
+git clone https://github.com/facebookresearch/xformers.git
+cd xformers
+git submodule update --init --recursive
+pip install -r requirements.txt
+pip install -e .
+cd ../stablediffusion
+
+python3 scripts/txt2img.py --ckpt /data/stable-diffusion-2-1-base/v2-1_512-nonema-pruned.ckpt --config configs/stable-diffusion/v2-inference.yaml --H 512 --W 512 --n_samples 1 --device cuda --prompt "Richard Feynman riding a horse" && mv outputs/txt2img-samples/samples/*.png /data
+
+
+python3 scripts/txt2img.py --ckpt /data/stable-diffusion-2-1/v2-1_768-ema-pruned.ckpt  --config configs/stable-diffusion/v2-inference-v.yaml --H 768 --W 768 --n_samples 1 --device cuda --prompt "Richard Feynman riding a horse" && mv outputs/txt2img-samples/samples/*.png /data
+
+USE --seed <number> to seed it
+
+python3 -m http.server 8080
+
+
